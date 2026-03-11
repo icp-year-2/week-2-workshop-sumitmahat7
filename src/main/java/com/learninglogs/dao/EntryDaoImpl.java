@@ -74,7 +74,22 @@ public class EntryDaoImpl implements EntryDao {
     @Override
     public boolean insertEntry(Entry entry) {
         // Write your code here
-        return false;
+        Connection conn = null;
+        try {
+            conn = DatabaseConnection.getConnection();
+            String sql = "INSERT INTO entries (topic_id, text) VALUES (?, ?)";
+            PreparedStatement statement = conn.prepareStatement(sql);
+            statement.setInt(1, entry.getTopicId());
+            statement.setString(2, entry.getText());
+            statement.executeUpdate();
+            return true;
+        }catch (SQLException e) {
+            System.out.println("Error inserting entry: " + e.getMessage());
+            return false;
+        }finally{
+            DatabaseConnection.closeConnection(conn);
+        }
+
     }
 
     // ============================================================
@@ -130,7 +145,30 @@ public class EntryDaoImpl implements EntryDao {
     @Override
     public ArrayList<Entry> fetchAllEntries() {
         // Write your code here
-        return new ArrayList<>();
+        ArrayList<Entry> entries = new ArrayList<>();
+        Connection conn = null;
+        try {
+            conn = DatabaseConnection.getConnection();
+            String sql = "SELECT * FROM entries";
+            PreparedStatement statement = conn.prepareStatement(sql);
+            ResultSet rs = statement.executeQuery();
+            while (rs.next()) {
+                Entry entry = new Entry(
+                        rs.getInt("id"),
+                        rs.getString("text"),
+                        rs.getInt("topic_id"),
+                        rs.getTimestamp("created_at"),
+                        rs.getTimestamp("updated_at")
+                );
+                entries.add(entry);
+            }
+        }catch (SQLException e) {
+            System.out.println("Error fetching entries: " + e.getMessage());
+        } finally {
+            DatabaseConnection.closeConnection(conn);
+        }
+        return entries;
+
     }
 
     // ============================================================
@@ -157,6 +195,31 @@ public class EntryDaoImpl implements EntryDao {
     @Override
     public ArrayList<Entry> fetchEntriesByTopicId(int topicId) {
         // Write your code here
-        return new ArrayList<>();
+        ArrayList<Entry> entries = new ArrayList<>();
+        Connection conn = null;
+
+        try {
+            conn = DatabaseConnection.getConnection();
+            String sql = "SELECT * FROM entries WHERE topic_id = ?";
+            PreparedStatement statement = conn.prepareStatement(sql);
+            statement.setInt(1, topicId);
+            ResultSet rs = statement.executeQuery();
+            while (rs.next()) {
+                Entry entry = new Entry(
+                        rs.getInt("id"),
+                        rs.getString("text"),
+                        rs.getInt("topic_id"),
+                        rs.getTimestamp("created_at"),
+                        rs.getTimestamp("updated_at")
+                );
+                entries.add(entry);
+            }
+        }catch (SQLException e) {
+            System.out.println("Error fetching entries by topic ID: " + e.getMessage());
+
+        }finally {
+            DatabaseConnection.closeConnection(conn);
+        }
+        return entries;
     }
 }
